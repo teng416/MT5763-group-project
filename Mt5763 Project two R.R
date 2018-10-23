@@ -12,7 +12,7 @@ data.f <- data.frame(x,y)
 
 #~~~~~~~~~~Vectorisation~~~~~~~~~~~~~~~~~~~~~~~~~
 
-boot.lm.vector <- function(inputData) {
+boot.lm.vector <- function(index, inputData) {
   
   #Random sampling from input data with replacement.
   d <- inputData[sample.int(nrow(inputData), replace = T),]
@@ -28,7 +28,17 @@ boot.lm.vector <- function(inputData) {
   solve(crossprod(X), crossprod(X,y))
 }
 
-system.time(r1 <- t(replicate(10000, boot.lm.vector(data.m))[,1,]))
+system.time(r1 <- t(replicate(10000, boot.lm.vector(1, data.m))[,1,]))
+
+#~~~~~~Parallelising~~~~~~~~
+
+library(parallel)
+library(doParallel)
+registerDoParallel(myClust)
+nCores <- detectCores()
+myClust <- makeCluster(nCores-1, type = "PSOCK")
+
+system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
 
 
 #~~~~~~~~~~~~~Carl's function~~~~~~~~~~~~~~~~~~~~~~
