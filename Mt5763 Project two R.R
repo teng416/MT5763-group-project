@@ -24,7 +24,7 @@ boot.lm.vector <- function(index, inputData) {
   #Vector with dependent variable.
   y <- d[, a+1]
   
-  #Solve for coefficients.
+  #Solve for coefficients. Solve requires square matrices, hence use of crossprod
   solve(crossprod(X), crossprod(X,y))
 }
 
