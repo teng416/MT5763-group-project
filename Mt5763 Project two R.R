@@ -26,9 +26,11 @@ boot.lm.vector <- function(index, inputData) {
   
   #Solve for coefficients. Solve requires square matrix, hence use of crossprod
   solve(crossprod(X), crossprod(X,y))
+  
 }
 
 system.time(r1 <- t(replicate(10000, boot.lm.vector(1, data.m))[,1,]))
+
 
 a <- c(mean(r1[,1]), mean(r1[,2]))
 a
@@ -41,6 +43,16 @@ myClust <- makeCluster(nCores-1, type = "PSOCK")
 
 
 system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
+
+rtestdf <- plyr::ldply(rtest)
+mylist <- rtestdf[,1]
+intercept <- mean(mylist[seq(1,nrow(rtestdf),2)])
+intercept
+slope <- mean(mylist[seq(2, nrow(rtestdf), 2)])
+slope
+
+
+
 
 
 #~~~~~~~~~~~~~Carl's function~~~~~~~~~~~~~~~~~~~~~~
@@ -90,6 +102,7 @@ bootpkg.lm <- function(formula, data, indices){
 }
 
 system.time(results <- boot(data = data.f, statistic = bootpkg.lm, R=10000, formula = y ~ x))
+
 
 
 results
