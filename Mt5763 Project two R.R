@@ -30,7 +30,8 @@ boot.lm.vector <- function(index, inputData) {
 
 system.time(r1 <- t(replicate(10000, boot.lm.vector(1, data.m))[,1,]))
 
-
+a <- c(mean(r1[,1]), mean(r1[,2]))
+a
 #~~~~~~~~~~~~~~~~Parallelising~~~~~~~~~~~~~~~~~~~~~
 
 library(parallel)
