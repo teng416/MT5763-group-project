@@ -38,7 +38,7 @@ library(parallel)
 library(doParallel)
 nCores <- detectCores()
 myClust <- makeCluster(nCores-1, type = "PSOCK")
-registerDoParallel(myClust)
+
 
 system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
 
