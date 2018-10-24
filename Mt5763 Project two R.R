@@ -24,13 +24,14 @@ boot.lm.vector <- function(index, inputData) {
   #Vector with dependent variable.
   y <- d[, a+1]
   
-  #Solve for coefficients. Solve requires square matrices, hence use of crossprod
+  #Solve for coefficients. Solve requires square matrix, hence use of crossprod
   solve(crossprod(X), crossprod(X,y))
 }
 
 system.time(r1 <- t(replicate(10000, boot.lm.vector(1, data.m))[,1,]))
 
-#~~~~~~Parallelising~~~~~~~~
+
+#~~~~~~~~~~~~~~~~Parallelising~~~~~~~~~~~~~~~~~~~~~
 
 library(parallel)
 library(doParallel)
@@ -75,4 +76,20 @@ system.time(r2 <- lmBoot(data.f, 10000))
 
 
 #Need to check results are the same!
+
+#~~~~~~~~~Microbenchmarking vs boot package~~~~~~~~~~~~~~~~~~~~~
+
+library(microbenchmark)
+library(boot)
+
+bootpkg.lm <- function(formula, data, indices){
+  d <- data[indices, ]
+  fit <- lm(formula, data = d)
+  return(coef(fit))
+}
+
+system.time(results <- boot(data = data.f, statistic = bootpkg.lm, R=10000, formula = y ~ x))
+
+
+results
 
