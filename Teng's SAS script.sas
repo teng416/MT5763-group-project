@@ -59,7 +59,15 @@ run;
 
 options nonotes;
 /*Run the macro*/
-%regBoot(NumberOfLoops=10, DataSet=Randomset, XVariable=x, YVariable=y);
+/* Start timer */
+%let _timer_start = %sysfunc(datetime());
+%regBoot(NumberOfLoops=100, DataSet=Randomset, XVariable=x, YVariable=y);
+/* Stop timer */
+data _null_;
+  dur = datetime() - &_timer_start;
+  put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
+run;
+
 
 
 /*generate random dataset to work with*/
@@ -75,6 +83,49 @@ run;
 
 /*improved macro*/
 
+%macro regBoot_new(NumberOfRep, DataSet, XVariable, YVariable);
+
+/*Number of rows in my dataset*/
+ 	data _null_;
+  	set &DataSet NOBS=size;
+  	call symput("NROW",size);
+ 	stop;
+ 	run;
+
+/*Sample my data with replacement and repeat NumOfRep times and form a single dataset*/
+	proc surveyselect data=&Dataset out=bootData_new seed = -23434 method = urs sampsize=&NROW rep = &NumberOfRep outhits noprint;
+    run;
+
+/*Conduct a regression on this single dataset according to repeats*/
+	proc reg data=bootData_new outest=ParameterEstimates_new noprint;
+	Model &YVariable=&XVariable;
+	by Replicate;
+	run;
+	quit;
+
+/*Extract just the columns for slope and intercept for storage*/
+	data ResultHolder_new;
+	set ParameterEstimates_new;
+	keep Intercept &XVariable;
+	run;
+
+%mend;
+
+/*run new macro*/
+/* Start timer */
+%let _timer_start = %sysfunc(datetime());
+%regBoot_new(NumberOfRep=100, DataSet=Randomset, XVariable=x, YVariable=y);
+/* Stop timer */
+data _null_;
+  dur = datetime() - &_timer_start;
+  put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
+run;
+
+
+
+
+
+/*add RTF and plot to the macro*/
 %macro regBoot_new(NumberOfRep, DataSet, XVariable, YVariable);
 
 /*Number of rows in my dataset*/
@@ -117,6 +168,5 @@ run;
 	ods rtf close;
 %mend;
 
-/*run new macro*/
+/*run macro*/
 %regBoot_new(NumberOfRep=100, DataSet=Randomset, XVariable=x, YVariable=y);
-
