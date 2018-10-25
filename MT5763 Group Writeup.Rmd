@@ -6,9 +6,9 @@ output: html_document
 ---
 The new function uses a vectorised form of linear regression to produce the coefficients. The input data must have it's columns ordered "Intercept", "Covariates", "Dependent Variable", ie we have
 
-Intercept | x1 | x2 | ... | y
-----------|----|----|-----|---
-1         | x11| x12| x1n | y1
+Intercept | x1 | x2 | ... | xn  | y
+----------|----|----|-----|-----|----
+1         | x11| x12| ... | x1n | y1
 
 and so on. From this we construct the matrix X which includes the intercept and covariates:
 
