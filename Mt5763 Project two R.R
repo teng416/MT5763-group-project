@@ -94,7 +94,7 @@ lmBoot <- function(inputData, nBoot){
 system.time(r2 <- lmBoot(data.f, 10000))
 
 
-#Need to check results are the same!
+
 
 #~~~~~~~~~Microbenchmarking vs boot package~~~~~~~~~~~~~~~~~~~~~
 
