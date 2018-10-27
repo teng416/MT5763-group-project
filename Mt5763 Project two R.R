@@ -101,9 +101,10 @@ bootpkg.lm <- function(formula, data, indices){
   return(coef(fit))
 }
 
-system.time(results <- boot(data = data.f, statistic = bootpkg.lm, R=10000, formula = y ~ x))
+#system.time(results <- boot(data = data.f, statistic = bootpkg.lm, R=10000, formula = y ~ x))
+#results
 
-
-
-results
-
+#Now performing the microbenchmarking. Only using 1000 bootstraps and 10 repititions due to how long
+#the boot() expression takes (I did wait it out once, results were similar for 100 repitions).
+microbenchmark(parLapply(myClust, 1:1000, fun = boot.lm.vector, inputData = data.m), times = 10)
+microbenchmark(boot(data = data.f, statistic = bootpkg.lm, R=1000, formula = y ~.), times = 10)
