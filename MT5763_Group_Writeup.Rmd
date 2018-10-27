@@ -197,3 +197,9 @@ parallelTime
 CarlTime
 ```
 
+
+To get a closer look at why our function is faster, we examine the profile of the original function.
+
+![**Figure 1: Original function profile**](/Users/euansunderland/Desktop/Screen Shot 2018-10-27 at 18.24.05.png)
+
+We can see that the use of the lm and rbind functions eats up the vast majority of the total function runtime. Our approach, which bypasses the use of these functions is much faster as a result.
