@@ -51,10 +51,11 @@ system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData
 
 rtestdf <- plyr::ldply(rtest)
 mylist <- rtestdf[,1]
-intercept <- mean(mylist[seq(1,nrow(rtestdf),ncol(data.m)-1)])
-intercept
-slope <- mean(mylist[seq(2, nrow(rtestdf), ncol(data.m)-1)])
-slope
+resultsHolder <- numeric(ncol(data.m)-1)
+for(i in 1:ncol(data.m)-1){
+  resultsHolder[i] <- mean(mylist[seq(i,nrow(rtestdf),ncol(data.m)-1)])
+}
+resultsHolder
 
 
 
