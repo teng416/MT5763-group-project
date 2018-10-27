@@ -5,7 +5,8 @@ x <- runif(n)
 y <- x + 1 + rexp(n)
 
 
-#Data for use with vector needs to be ordered: Intercept, covariates, dependent variable.
+#Data for use with vectorisation needs to be ordered: Intercept, covariates, dependent variable.
+#Also must be in a datamatrix rather than a dataframe.
 data.m <- cbind("(Intercept)" = 1, x, y)
 data.f <- data.frame(x,y)
 
