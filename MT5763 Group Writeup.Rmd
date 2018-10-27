@@ -11,7 +11,7 @@ Intercept | x1 | x2 | ... | xn  | y
 ----------|----|----|-----|-----|----
 1         | x11| x12| ... | x1n | y1
 
-and so on. We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
+and so on. Importantly, data must be a matrix rather than a dataframe. We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
 
 $$
 \textbf{X} = \begin{pmatrix} 1 & x_{11} & x_{12}  & \cdots & x_{1n} \\
@@ -92,11 +92,11 @@ system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData
 
 rtestdf <- plyr::ldply(rtest)
 mylist <- rtestdf[,1]
-intercept <- mean(mylist[seq(1,nrow(rtestdf),2)])
-intercept
-slope <- mean(mylist[seq(2, nrow(rtestdf), 2)])
-slope
-
+resultsHolder <- numeric(ncol(data.m)-1)
+for(i in 1:ncol(data.m)-1){
+  resultsHolder[i] <- mean(mylist[seq(i,nrow(rtestdf),ncol(data.m)-1)])
+}
+resultsHolder
 
 
 ```
