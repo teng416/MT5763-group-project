@@ -1,7 +1,9 @@
 ---
 title: "MT5763 Group Project"
 author: "Group Yojimbo"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 
@@ -11,7 +13,7 @@ Intercept | x1 | x2 | ... | xn  | y
 ----------|----|----|-----|-----|----
 1         | x11| x12| ... | x1n | y1
 
-and so on. Importantly, data must be a matrix rather than a dataframe. We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
+and so on. **Importantly, data must be a matrix rather than a dataframe.** We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
 
 $$
 \textbf{X} = \begin{pmatrix} 1 & x_{11} & x_{12}  & \cdots & x_{1n} \\
@@ -88,7 +90,8 @@ nCores <- detectCores()
 myClust <- makeCluster(nCores-1, type = "PSOCK")
 
 
-system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
+parallelTime <- system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
+parallelTime
 
 rtestdf <- plyr::ldply(rtest)
 mylist <- rtestdf[,1]
@@ -153,7 +156,7 @@ lmBoot <- function(inputData, nBoot){
 
 system.time(r2 <- lmBoot(data.f, 10000))
 ```
-This is dramatically slower than our improved functions! We have clearly made significant improvement.
+This is dramatically slower than our improved function which came in at `r parallelTime` ! We have clearly made significant improvement.
 A further question arises; how do we compare with packages designed for bootstrapping?
 
 ```{r}
