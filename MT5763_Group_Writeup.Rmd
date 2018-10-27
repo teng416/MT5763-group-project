@@ -1,7 +1,8 @@
 ---
 title: "MT5763 Group Project"
 author: "Group Yojimbo"
-output: html_document
+output:
+  html_document: default
 ---
 
 
@@ -11,7 +12,7 @@ Intercept | x1 | x2 | ... | xn  | y
 ----------|----|----|-----|-----|----
 1         | x11| x12| ... | x1n | y1
 
-and so on. Importantly, data must be a matrix rather than a dataframe. We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
+and so on. **Importantly, data must be a matrix rather than a dataframe.** We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
 
 $$
 \textbf{X} = \begin{pmatrix} 1 & x_{11} & x_{12}  & \cdots & x_{1n} \\
@@ -88,15 +89,16 @@ nCores <- detectCores()
 myClust <- makeCluster(nCores-1, type = "PSOCK")
 
 
-system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
+parallelTime <- system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
+parallelTime
 
 rtestdf <- plyr::ldply(rtest)
 mylist <- rtestdf[,1]
-intercept <- mean(mylist[seq(1,nrow(rtestdf),2)])
-intercept
-slope <- mean(mylist[seq(2, nrow(rtestdf), 2)])
-slope
-
+resultsHolder <- numeric(ncol(data.m)-1)
+for(i in 1:ncol(data.m)-1){
+  resultsHolder[i] <- mean(mylist[seq(i,nrow(rtestdf),ncol(data.m)-1)])
+}
+resultsHolder
 
 
 ```
@@ -113,8 +115,10 @@ library(tidyverse)
 intercept2 <- coef(lm(y~x, data = data.f))[1]
 slope2 <- coef(lm(y~x, data = data.f))[2]
 
-ggplot(data = data.f) + geom_point(mapping = aes(x, y)) + geom_abline(mapping = NULL, data = NULL, slope = slope, intercept = intercept, size = 2 ) +
+ggplot(data = data.f) + geom_point(mapping = aes(x, y)) +
+   geom_abline(mapping = NULL, data = NULL, slope = resultsHolder[2], intercept = resultsHolder[1], size = 2 )+
   geom_abline(mapping = NULL, data = NULL, slope = slope2, intercept = intercept2, color = "red")
+
 ```
 
 Can clearly see that lines are right on top of each other - our function produces results at least as good as lm().
@@ -151,9 +155,13 @@ lmBoot <- function(inputData, nBoot){
   
 }
 
-system.time(r2 <- lmBoot(data.f, 10000))
+CarlTime <- system.time(r2 <- lmBoot(data.f, 10000))
+CarlTime
+
+CarlResults <- c(mean(r2[,1]), mean(r2[,2]))
+CarlResults
 ```
-This is dramatically slower than our improved functions! We have clearly made significant improvement.
+This is dramatically slower than our improved function! We have clearly made significant improvement.
 A further question arises; how do we compare with packages designed for bootstrapping?
 
 ```{r}
@@ -178,3 +186,14 @@ microbenchmark(boot(data = data.f, statistic = bootpkg.lm, R=1000, formula = y ~
 ```
 
 Again, we are much quicker!
+
+To conclude, we can see that we obtain effectively the same results as the original function. Any discrepancies (although small) will be due to the unavoidably random nature of bootstrapping. We are also significantly faster than the original function.
+
+```{r}
+resultsHolder
+CarlResults
+
+parallelTime
+CarlTime
+```
+
