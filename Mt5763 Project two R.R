@@ -45,11 +45,15 @@ myClust <- makeCluster(nCores-1, type = "PSOCK")
 
 system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
 
+
+#Note that this method for obtaining the results works for one covariate. 
+#Will need to adapt to retrieve the values for multiple covariates.
+
 rtestdf <- plyr::ldply(rtest)
 mylist <- rtestdf[,1]
-intercept <- mean(mylist[seq(1,nrow(rtestdf),2)])
+intercept <- mean(mylist[seq(1,nrow(rtestdf),ncol(data.m)-1)])
 intercept
-slope <- mean(mylist[seq(2, nrow(rtestdf), 2)])
+slope <- mean(mylist[seq(2, nrow(rtestdf), ncol(data.m)-1)])
 slope
 
 
