@@ -1,0 +1,222 @@
+---
+title: "MT5763 Group Project"
+author: "Group Yojimbo"
+output:
+  html_document: default
+---
+The aim of this project was to produce a quick, efficient function in R capable of producing linear regression coefficients for a data set using bootstrapping. In lieu of using slow loops and inbuilt functions, we instead vectorise the code.
+
+##Underlying Mathematics
+
+The new function uses a vectorised form of linear regression to produce the coefficients. The input data must have it's columns ordered "Intercept", "Covariates", "Dependent Variable", ie we have
+
+Intercept | x1 | x2 | ... | xn  | y
+----------|----|----|-----|-----|----
+1         | x11| x12| ... | x1n | y1
+
+and so on. **Importantly, data must be a matrix rather than a dataframe.** We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
+
+$$
+\textbf{X} = \begin{pmatrix} 1 & x_{11} & x_{12}  & \cdots & x_{1n} \\
+1 & x_{21} & x_{22}  & \cdots & x_{2n} \\
+\vdots & \vdots & \vdots & \ddots & \vdots & \\
+1 & x_{n1} & x_{n2} & \cdots & x_{nn}
+\end{pmatrix}
+$$
+and the vector y that includes the dependent variable:
+
+$$
+y = \begin{pmatrix} y_{1} \\ y _{2} \\ \vdots \\ y_{n} \end{pmatrix}
+$$
+We wish to solve the matrix equation
+$$
+\textbf{X} z = y
+$$
+Where $z$ is a vector containing our regression coefficients, ie if we compute the first line of this calculation we find:
+
+$$
+z_{1} + z_{2}x_{11} + z_{3}x_{12} + \cdots + z_{n}x_{1n} = y_{1}
+$$
+Solving over the entire dataset gives us a good idea of what the values of $z_{i}$ are. R has the command solve() built in for exactly this type of problem, however solve() only works if $\textbf{X}$ is a square matrix. To remedy this, we multiply both sides of the equation by the transpose of $\textbf{X}$. This is what is being done using crossprod(). This obviously has no effect on the solutions $z_{i}$, it merely frames the problem in such a way that solve() is satisfied.
+
+##Implementing the Code
+
+Having covered the mathematical framework, we now look at the code that actually does this.
+
+
+```{r}
+
+#Generating some random data to work with.
+set.seed(1)
+n <- 100
+x <- runif(n)
+y <- x + 1 + rexp(n)
+
+
+#Data for use with vector needs to be ordered: Intercept, covariates, dependent variable.
+data.m <- cbind("(Intercept)" = 1, x, y)
+data.f <- data.frame(x,y)
+
+
+#~~~~~~~~~~Vectorisation~~~~~~~~~~~~~~~~~~~~~~~~~
+
+boot.lm.vector <- function(index, inputData) {
+  
+  #Random sampling from input data with replacement.
+  d <- inputData[sample.int(nrow(inputData), replace = T),]
+  
+  #Define matrix with covariates and intercept.
+  a <- ncol(inputData)-1
+  X <- d[, 1:a]
+  
+  #Vector with dependent variable.
+  y <- d[, a+1]
+  
+  #Solve for coefficients. Solve requires square matrix, hence use of crossprod
+  solve(crossprod(X), crossprod(X,y))
+}
+
+#Non parallel method of repeating bootstraps, still produces very respectable times.
+
+system.time(r1 <- t(replicate(10000, boot.lm.vector(1, data.m))[,1,]))
+
+a <- c(mean(r1[,1]), mean(r1[,2]))
+a
+```
+
+```{r}
+#~~~~~~~~~~~~~~~~Parallelising~~~~~~~~~~~~~~~~~~~~~
+
+library(parallel)
+library(doParallel)
+nCores <- detectCores()
+myClust <- makeCluster(nCores-1, type = "PSOCK")
+
+
+parallelTime <- system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
+parallelTime
+
+rtestdf <- plyr::ldply(rtest)
+mylist <- rtestdf[,1]
+resultsHolder <- numeric(ncol(data.m)-1)
+for(i in 1:ncol(data.m)-1){
+  resultsHolder[i] <- mean(mylist[seq(i,nrow(rtestdf),ncol(data.m)-1)])
+}
+resultsHolder
+
+
+```
+
+We wish to visualise how well our function has fit the data. 
+
+```{r, results='hide'}
+library(tidyverse)
+```
+
+```{r}
+#Plot data with trendlines from our function and from lm()
+
+intercept2 <- coef(lm(y~x, data = data.f))[1]
+slope2 <- coef(lm(y~x, data = data.f))[2]
+
+ggplot(data = data.f) + geom_point(mapping = aes(x, y)) +
+   geom_abline(mapping = NULL, data = NULL, slope = resultsHolder[2], intercept = resultsHolder[1], size = 2 )+
+  geom_abline(mapping = NULL, data = NULL, slope = slope2, intercept = intercept2, color = "red")
+
+```
+
+Can clearly see that lines are right on top of each other - our function produces results at least as good as lm().
+
+###Summary of how to use the function
+
+1. Place the dependent variable is in the last column of the data.
+2. Add an 'intercept' column in the first column.
+3. Ensure that the data is in matrix form rather than a dataframe.
+
+
+##Timing 
+
+We have established that the function works, so how much quicker is it than the original?
+
+```{r}
+lmBoot <- function(inputData, nBoot){
+  
+  for(i in 1:nBoot){
+    
+    # resample our data with replacement
+    bootData <- inputData[sample(1:nrow(inputData), nrow(inputData), replace = T),]
+    
+    # fit the model under this alternative reality
+    bootLM <- lm(y ~ x, data = bootData)
+    
+    # store the coefs
+    if(i == 1){
+      
+      bootResults <- matrix(coef(bootLM), ncol = 2)
+      
+    } else {
+      
+      bootResults<- rbind(bootResults, matrix(coef(bootLM), ncol = 2))
+      
+    }
+    
+    
+  } # end of i loop
+  
+  bootResults
+  
+}
+
+CarlTime <- system.time(r2 <- lmBoot(data.f, 10000))
+CarlTime
+
+CarlResults <- c(mean(r2[,1]), mean(r2[,2]))
+CarlResults
+```
+This is dramatically slower than our improved function! We have clearly made significant improvement.
+A further question arises; how do we compare with packages designed for bootstrapping?
+
+```{r}
+
+library(microbenchmark)
+library(boot)
+
+#Defining a simple function that will work with boot package.
+bootpkg.lm <- function(formula, data, indices){
+  d <- data[indices, ]
+  fit <- lm(formula, data = d)
+  return(coef(fit))
+}
+
+#system.time(results <- boot(data = data.f, statistic = bootpkg.lm, R=10000, formula = y ~ x))
+#results
+
+#Now performing the microbenchmarking. Only using 1000 bootstraps and 10 repititions due to how long
+#the boot() expression takes (I did wait it out once, results were similar for 100 repitions).
+microbenchmark(parLapply(myClust, 1:1000, fun = boot.lm.vector, inputData = data.m), times = 10)
+microbenchmark(boot(data = data.f, statistic = bootpkg.lm, R=1000, formula = y ~.), times = 10)
+```
+
+Again, we are much quicker!
+
+##Conclusion
+
+To conclude, we can see that we obtain effectively the same results as the original function. Any discrepancies (although small) will be due to the unavoidably random nature of bootstrapping. We are also significantly faster than the original function.
+
+```{r}
+resultsHolder
+CarlResults
+
+parallelTime
+CarlTime
+```
+
+
+To get a closer look at why our function is faster, we examine the profile of the original function.
+
+![**Figure 1: Original function profile**](/Users/euansunderland/Desktop/Screen Shot 2018-10-27 at 18.24.05.png)
+
+We can see that the use of the lm and rbind functions eats up the vast majority of the total function runtime. Our approach, which bypasses the use of these functions is much faster as a result.
+
+
+

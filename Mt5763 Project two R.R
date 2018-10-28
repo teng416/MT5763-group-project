@@ -5,7 +5,8 @@ x <- runif(n)
 y <- x + 1 + rexp(n)
 
 
-#Data for use with vector needs to be ordered: Intercept, covariates, dependent variable.
+#Data for use with vectorisation needs to be ordered: Intercept, covariates, dependent variable.
+#Also must be in a datamatrix rather than a dataframe.
 data.m <- cbind("(Intercept)" = 1, x, y)
 data.f <- data.frame(x,y)
 
@@ -44,12 +45,17 @@ myClust <- makeCluster(nCores-1, type = "PSOCK")
 
 system.time(rtest <- parLapply(myClust, 1:10000, fun = boot.lm.vector, inputData = data.m)) 
 
+
+#Note that this method for obtaining the results works for one covariate. 
+#Will need to adapt to retrieve the values for multiple covariates.
+
 rtestdf <- plyr::ldply(rtest)
 mylist <- rtestdf[,1]
-intercept <- mean(mylist[seq(1,nrow(rtestdf),2)])
-intercept
-slope <- mean(mylist[seq(2, nrow(rtestdf), 2)])
-slope
+resultsHolder <- numeric(ncol(data.m)-1)
+for(i in 1:ncol(data.m)-1){
+  resultsHolder[i] <- mean(mylist[seq(i,nrow(rtestdf),ncol(data.m)-1)])
+}
+resultsHolder
 
 
 
@@ -88,7 +94,7 @@ lmBoot <- function(inputData, nBoot){
 system.time(r2 <- lmBoot(data.f, 10000))
 
 
-#Need to check results are the same!
+
 
 #~~~~~~~~~Microbenchmarking vs boot package~~~~~~~~~~~~~~~~~~~~~
 
@@ -101,9 +107,10 @@ bootpkg.lm <- function(formula, data, indices){
   return(coef(fit))
 }
 
-system.time(results <- boot(data = data.f, statistic = bootpkg.lm, R=10000, formula = y ~ x))
+#system.time(results <- boot(data = data.f, statistic = bootpkg.lm, R=10000, formula = y ~ x))
+#results
 
-
-
-results
-
+#Now performing the microbenchmarking. Only using 1000 bootstraps and 10 repititions due to how long
+#the boot() expression takes (I did wait it out once, results were similar for 100 repitions).
+microbenchmark(parLapply(myClust, 1:1000, fun = boot.lm.vector, inputData = data.m), times = 10)
+microbenchmark(boot(data = data.f, statistic = bootpkg.lm, R=1000, formula = y ~.), times = 10)
