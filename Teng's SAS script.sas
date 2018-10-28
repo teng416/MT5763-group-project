@@ -82,6 +82,20 @@ proc print;
 run;
 
 /*improved macro*/
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*This is a small SAS program to perform nonparametric bootstraps for a regression
+/*Inputs: 																								*/
+/*	- NumberOfRep: the number of bootstrap iterations
+/*	- Dataset: A SAS dataset containing the response and covariate										*/
+/*	- XVariable: The covariate for our regression model (gen. continuous numeric)						*/
+/*	- YVariable: The response variable for our regression model (gen. continuous numeric)				*/
+/*Outputs:																								*/
+/*	- ResultHolder_new: A SAS dataset with NumberOfRep rows and two columns, RandomIntercept & RandomSlope*/
+
+/*Improve Logic: the previous macro uses loop. For each loop, it will generate a newly sampled dataset*/
+/*and calculate the coefficients. The updated macro will create resample all the new dataset first into one dataset */
+/*and do regression in one dataset according to index of iterations.*/
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 %macro regBoot_new(NumberOfRep, DataSet, XVariable, YVariable);
 
