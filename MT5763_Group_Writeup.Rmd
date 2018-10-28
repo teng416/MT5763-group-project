@@ -4,7 +4,9 @@ author: "Group Yojimbo"
 output:
   html_document: default
 ---
+The aim of this project was to produce a quick, efficient function in R capable of producing linear regression coefficients for a data set using bootstrapping. In lieu of using slow loops and inbuilt functions, we instead vectorise the code.
 
+##Underlying Mathematics
 
 The new function uses a vectorised form of linear regression to produce the coefficients. The input data must have it's columns ordered "Intercept", "Covariates", "Dependent Variable", ie we have
 
@@ -36,6 +38,8 @@ $$
 z_{1} + z_{2}x_{11} + z_{3}x_{12} + \cdots + z_{n}x_{1n} = y_{1}
 $$
 Solving over the entire dataset gives us a good idea of what the values of $z_{i}$ are. R has the command solve() built in for exactly this type of problem, however solve() only works if $\textbf{X}$ is a square matrix. To remedy this, we multiply both sides of the equation by the transpose of $\textbf{X}$. This is what is being done using crossprod(). This obviously has no effect on the solutions $z_{i}$, it merely frames the problem in such a way that solve() is satisfied.
+
+##Implementing the Code
 
 Having covered the mathematical framework, we now look at the code that actually does this.
 
@@ -123,6 +127,14 @@ ggplot(data = data.f) + geom_point(mapping = aes(x, y)) +
 
 Can clearly see that lines are right on top of each other - our function produces results at least as good as lm().
 
+###Summary of how to use the function
+
+1. Place the dependent variable is in the last column of the data.
+2. Add an 'intercept' column in the first column.
+3. Ensure that the data is in matrix form rather than a dataframe.
+
+
+##Timing 
 
 We have established that the function works, so how much quicker is it than the original?
 
@@ -187,6 +199,8 @@ microbenchmark(boot(data = data.f, statistic = bootpkg.lm, R=1000, formula = y ~
 
 Again, we are much quicker!
 
+##Conclusion
+
 To conclude, we can see that we obtain effectively the same results as the original function. Any discrepancies (although small) will be due to the unavoidably random nature of bootstrapping. We are also significantly faster than the original function.
 
 ```{r}
@@ -203,3 +217,6 @@ To get a closer look at why our function is faster, we examine the profile of th
 ![**Figure 1: Original function profile**](/Users/euansunderland/Desktop/Screen Shot 2018-10-27 at 18.24.05.png)
 
 We can see that the use of the lm and rbind functions eats up the vast majority of the total function runtime. Our approach, which bypasses the use of these functions is much faster as a result.
+
+
+
