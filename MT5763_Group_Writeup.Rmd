@@ -123,7 +123,7 @@ ggplot(data = data.f) + geom_point(mapping = aes(x, y)) +
   geom_abline(mapping = NULL, data = NULL, slope = slope2, intercept = intercept2, color = "red")
 
 ```
-![a2_mt5763_1](https://user-images.githubusercontent.com/43880517/47740287-4d3b1b80-dc6f-11e8-90d6-575637a7303e.png)
+![Plot with trendlines from the function created and lm()](https://user-images.githubusercontent.com/43880517/47740287-4d3b1b80-dc6f-11e8-90d6-575637a7303e.png)
 
 
 It is clear to see that lines are right on top of each other - our function produces results at least as good as lm().
