@@ -4,17 +4,17 @@ author: "Group Yojimbo"
 output:
   html_document: default
 ---
-The aim of this project was to produce a quick, efficient function in R capable of producing linear regression coefficients for a data set using bootstrapping. In lieu of using slow loops and inbuilt functions, we instead vectorise the code.
+The aim of this project is to produce a quick, efficient function in R capable of producing linear regression coefficients for a data set using bootstrapping. The approach used for this project is vectorisation of the code, in lieu of using slow loops and inbuilt R functions.
 
 ##Underlying Mathematics
 
-The new function uses a vectorised form of linear regression to produce the coefficients. The input data must have it's columns ordered "Intercept", "Covariates", "Dependent Variable", ie we have
+The new function, "boot.lm.vector" uses a vectorised form of linear regression to produce the coefficients. The input data must have its columns ordered as follows: "Intercept", "Covariates", "Dependent Variable". For the column "Intercept", the following results were achieved.
 
 Intercept | x1 | x2 | ... | xn  | y
 ----------|----|----|-----|-----|----
 1         | x11| x12| ... | x1n | y1
 
-and so on. **Importantly, data must be a matrix rather than a dataframe.** We shall now discuss the maths behind how our function operates. We construct the matrix X which includes the intercept and covariates:
+**Importantly, data must be a matrix rather than a dataframe, as this simplifies mathematical operations.** We shall now discuss the mathematics behind how this function operates. The matrix X is construncted, which includes the interception and covariates:
 
 $$
 \textbf{X} = \begin{pmatrix} 1 & x_{11} & x_{12}  & \cdots & x_{1n} \\
@@ -37,12 +37,11 @@ Where $z$ is a vector containing our regression coefficients, ie if we compute t
 $$
 z_{1} + z_{2}x_{11} + z_{3}x_{12} + \cdots + z_{n}x_{1n} = y_{1}
 $$
-Solving over the entire dataset gives us a good idea of what the values of $z_{i}$ are. R has the command solve() built in for exactly this type of problem, however solve() only works if $\textbf{X}$ is a square matrix. To remedy this, we multiply both sides of the equation by the transpose of $\textbf{X}$. This is what is being done using crossprod(). This obviously has no effect on the solutions $z_{i}$, it merely frames the problem in such a way that solve() is satisfied.
+Solving over the entire dataset gives us a good idea of what the values of $z_{i}$ are. R has the command solve() built in for exactly this type of problem, however solve() only works if $\textbf{X}$ is a square matrix. To remedy this, we multiply both sides of the equation by the transpose of $\textbf{X}$. This is what is being done using crossprod(). This obviously has no effect on the solutions of $z_{i}$, it merely frames the problem in such a way that solve() is can be used.
 
 ##Implementing the Code
 
 Having covered the mathematical framework, we now look at the code that actually does this.
-
 
 ```{r}
 
@@ -124,8 +123,10 @@ ggplot(data = data.f) + geom_point(mapping = aes(x, y)) +
   geom_abline(mapping = NULL, data = NULL, slope = slope2, intercept = intercept2, color = "red")
 
 ```
+![a2_mt5763_1](https://user-images.githubusercontent.com/43880517/47740287-4d3b1b80-dc6f-11e8-90d6-575637a7303e.png)
 
-Can clearly see that lines are right on top of each other - our function produces results at least as good as lm().
+
+It is clear to see that lines are right on top of each other - our function produces results at least as good as lm().
 
 ###Summary of how to use the function
 
