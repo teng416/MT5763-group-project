@@ -1,3 +1,14 @@
+
+/*generate random dataset to work with*/
+data Randomset;
+do i= 1 to 100;
+x = 100*rand('uniform');
+y = 2*x+4+5*rand('normal');
+output;
+end;
+proc sort data=Randomset;by x; run;
+
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /*This is a small SAS program to perform nonparametric bootstraps for a regression
 /*It is not efficient nor general*/
@@ -57,6 +68,9 @@ rename Intercept=RandomIntercept &XVariable=RandomSlope;
 run;
 %mend;
 
+
+/*for recording time purpose, the code from next line till stop timer (inclusive)need to run together*/
+
 options nonotes;
 /*Run the macro*/
 /* Start timer */
@@ -67,19 +81,11 @@ data _null_;
   dur = datetime() - &_timer_start;
   put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
+/*Original Macro used around 12 seconds for 100 iterations*/
 
 
 
-/*generate random dataset to work with*/
-data Randomset;
-do i= 1 to 100;
-x = 100*rand('uniform');
-y = 2*x+4+5*rand('normal');
-output;
-end;
-proc sort data=Randomset;by x; run;
-proc print;
-run;
+
 
 /*improved macro*/
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -125,6 +131,8 @@ run;
 
 %mend;
 
+/*for recording time purpose, the code from next line till stop timer (inclusive)need to run together*/
+
 /*run new macro*/
 /* Start timer */
 %let _timer_start = %sysfunc(datetime());
@@ -136,11 +144,16 @@ data _null_;
 run;
 
 
+/*On Average for 100 iterations, the original macro needs 12 seconds, the improved macro needs only 0.12 second. Significant improvement is noticed.*/
 
 
 
-/*add RTF and plot to the macro*/
-%macro regBoot_new(NumberOfRep, DataSet, XVariable, YVariable);
+
+
+
+
+/*The following is our final macro, which will generate an RTF file for mean and 95% confidence intervals of coefficients and coefficients distribution*/
+%macro regBoot_new_final(NumberOfRep, DataSet, XVariable, YVariable);
 
 /*Number of rows in my dataset*/
  	data _null_;
@@ -175,8 +188,13 @@ run;
 	proc means data=ResultHolder_new;
 	var RandomIntercept RandomSlope;
 	output out=means mean=;
-	keep Intercept RandomSlope;
 	run; 
+
+/*keep means only and delete the other irrelevant columns*/
+	data means;
+	set means;
+	keep RandomIntercept RandomSlope;
+	run;
 
 /*calculate confidence interval*/
 	proc univariate data=ResultHolder_new noprint;
@@ -204,7 +222,7 @@ run;
 %mend;
 
 /*run macro*/
-%regBoot_new(NumberOfRep=100, DataSet=Randomset, XVariable=x, YVariable=y);
+%regBoot_new_final(NumberOfRep=100, DataSet=Randomset, XVariable=x, YVariable=y);
 
 
 
