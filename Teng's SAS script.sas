@@ -165,22 +165,49 @@ run;
 	set ParameterEstimates_new;
 	keep Intercept &XVariable;
 	run;
+/*rename col */
+	data ResultHolder_new;
+    set ResultHolder_new;
+    rename Intercept=RandomIntercept &XVariable=RandomSlope;
+    run;
+
+/*calculate means for each paramters*/
+	proc means data=ResultHolder_new;
+	var RandomIntercept RandomSlope;
+	output out=means mean=;
+	keep Intercept RandomSlope;
+	run; 
 
 /*calculate confidence interval*/
-	proc univariate data=ResultHolder_new;
-	var x;
-	output out=regBootCI pctlpts=2.5, 97.5 pctlpre=CI; 
+	proc univariate data=ResultHolder_new noprint;
+	var RandomIntercept RandomSlope;
+	output out=regBootCI pctlpts=2.5 97.5 pctlpre=RandomIntercept_ RandomSlope_; 
 	run;
 
 /*plot distribution and output with RTF*/
-	ODS RTF File = "result";
-	proc print data=regBootCI;run;
+	ods escapechar = '^';
+    ods rtf body = 'Bootstrapping Analysis' style = styles.rtf;
+
+    proc print data=means;
+	title '^S={protectspecialchars = on} Mean of coefficients';
+    run;
+
+	proc print data=regBootCI;
+	title '^S={protectspecialchars = on} 95% Confidence Intervals';
+    run;
 
 	proc gchart data=ResultHolder_new;
-	vbar Intercept x;
+	title 'Coefficients Distribution';
+	vbar RandomIntercept RandomSlope;
 	run;
 	ods rtf close;
 %mend;
 
 /*run macro*/
 %regBoot_new(NumberOfRep=100, DataSet=Randomset, XVariable=x, YVariable=y);
+
+
+
+
+
+
