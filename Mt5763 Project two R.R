@@ -14,7 +14,7 @@ data.f <- data.frame(x,y)
 #~~~~~~~~~~Vectorisation~~~~~~~~~~~~~~~~~~~~~~~~~
 
 boot.lm.vector <- function(index, inputData) {
-  
+  set.seed(index)
   #Random sampling from input data with replacement.
   d <- inputData[sample.int(nrow(inputData), replace = T),]
   
@@ -27,14 +27,16 @@ boot.lm.vector <- function(index, inputData) {
   
   #Solve for coefficients. Solve requires square matrix, hence use of crossprod
   solve(crossprod(X), crossprod(X,y))
-  
 }
-
-system.time(r1 <- t(replicate(10000, boot.lm.vector(1, data.m))[,1,]))
-
-
-a <- c(mean(r1[,1]), mean(r1[,2]))
-a
+#Non parallel method of repeating bootstraps, still produces very respectable times.
+system.time(r1 <- t(lapply(1:10000, boot.lm.vector, inputData = data.m)))
+r1df <- plyr::ldply(r1)
+mylist <- r1df[,1]
+resultsHolder1 <- numeric(ncol(data.m)-1)
+for(i in 1:ncol(data.m)-1){
+  resultsHolder1[i] <- mean(mylist[seq(i,nrow(r1df),ncol(data.m)-1)])
+}
+resultsHolder1
 #~~~~~~~~~~~~~~~~Parallelising~~~~~~~~~~~~~~~~~~~~~
 
 library(parallel)
