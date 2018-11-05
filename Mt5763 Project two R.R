@@ -29,7 +29,7 @@ boot.lm.vector <- function(index, inputData) {
   solve(crossprod(X), crossprod(X,y))
 }
 #Non parallel method of repeating bootstraps, still produces very respectable times.
-system.time(r1 <- t(lapply(1:10000, boot.lm.vector, inputData = data.m)))
+system.time(r1 <- lapply(1:10000, boot.lm.vector, inputData = data.m))
 r1df <- plyr::ldply(r1)
 mylist <- r1df[,1]
 resultsHolder1 <- numeric(ncol(data.m)-1)
