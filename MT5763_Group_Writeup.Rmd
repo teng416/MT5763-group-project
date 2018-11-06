@@ -229,7 +229,7 @@ Improved Macro: for 100 iterations, uses 0.12 seconds on average.
 This is a significant improvement!
 
 ##RTF file:
-The improved Macro will output an RTF file containing mean for each coefficients, 95% confidence intervals for each coefficients and plot of coefficients distribution as required using ODS. 
+The improved Macro will output an RTF file containing mean for each coefficients, 95% confidence intervals for each coefficient and plot of coefficients distribution as required using ODS. 
 
 ##Using the function
 The function operates on exactly the same input variables as the original function. The only difference (apart from the increased speed) is that our results are outputted to an rtf file and contain extra information, such as means, confidence intervals and plots. 
